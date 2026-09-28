@@ -2,12 +2,13 @@ import { envValidationSchema } from './envValidation.js';
 
 const valid = {
   API_PREFIX: 'api',
-  DATABASE_URL: 'postgresql://postgres:Adrian147.t@localhost:5432/restaurante',
+  DATABASE_URL:
+    'postgresql://postgres:Adrian147.t@localhost:5432/pos_ecommerce?schema=public',
   JWT_SECRET:
     '65bec98d554066d7e60b5fd2e45c62512bdd737e8f7ffa0ff8193d2a6dee750a8742a4a8a0739df0b9fbdda74c615caa',
   JWT_EXPIRES_IN: '1h',
   CORS_ORIGIN: 'http://localhost:5173',
-  RESTAURANT_NAME: 'La Buena Mesa',
+  RESTAURANT_NAME: 'E-Commerce',
   TAX_RATE: '0.13',
 };
 

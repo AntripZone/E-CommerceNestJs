@@ -60,7 +60,7 @@ export class UsuariosService {
         id: true,
         email: true,
         rol: true,
-        creadoEn: true,
+        createdAt: true,
         passwordHash: true,
       },
     });
