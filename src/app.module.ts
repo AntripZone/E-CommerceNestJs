@@ -8,8 +8,8 @@ import { ProductosModule } from './productos/productos.module.js';
 import { UsuariosModule } from './usuarios/usuarios.module.js';
 import { ClientesModule } from './clientes/clientes.module.js';
 import { VentasModule } from './ventas/ventas.module.js';
-import { PagosModule } from './pagos/pagos.module.js';
-import { EnviosModule } from './envios/envios.module.js';
+import { PedidosModule } from './pedidos/pedidos.module.js';
+import { TiendaModule } from './tienda/tienda.module.js';
 import { InventarioModule } from './inventario/inventario.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { envValidationSchema } from './config/envValidation.js';
@@ -40,8 +40,6 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     UsuariosModule,
     ClientesModule,
     VentasModule,
-    PagosModule,
-    EnviosModule,
     InventarioModule,
     AuthModule,
   ],

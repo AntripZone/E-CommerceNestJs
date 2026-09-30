@@ -13,7 +13,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 
 interface MovimientoStock {
   productoId: number;
-  usuarioId: number;
+  usuarioId: number | null;
   cantidad: number;
   tipo: TipoMovimiento;
   ventaId?: number;

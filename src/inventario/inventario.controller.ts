@@ -57,7 +57,7 @@ export class InventarioController {
   }
 
   @Roles('ADMIN', 'CAJERO')
-  @Get('moviemtos/:id')
+  @Get('movimientos/:id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.inventarioService.findOne(id);
   }

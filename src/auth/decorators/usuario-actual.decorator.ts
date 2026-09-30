@@ -1,10 +1,10 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { Rol } from '../../generated/prisma/enums.js';
+import { RolToken } from './roles.decorator.js';
 
 export interface UsuarioToken {
   id: number;
   email: string;
-  rol: Rol;
+  rol: RolToken;
 }
 
 export const UsuarioActual = createParamDecorator(

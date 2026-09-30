@@ -58,6 +58,7 @@ export class ProductosService {
         ...this.construirFiltro(filtros),
         activo: true,
         publicadoWeb: true,
+        stock: { gt: 0 },
       },
       omit: { precioCompra: true, stockMinimo: true, version: true },
       include: {

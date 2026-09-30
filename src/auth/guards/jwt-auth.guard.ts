@@ -1,29 +1,18 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
-import jwt from 'jsonwebtoken';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
-export class JwtAuthGuard implements CanActivate {
-  canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest();
-    const header = request.headers.authorization;
-
-    if (!header || !header.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Token no proporcionado');
-    }
-
-    try {
-      request.user = jwt.verify(
-        header.split(' ')[1],
-        process.env.JWT_SECRET as string,
+export class JwtAuthGuard extends AuthGuard('jwt') {
+  handleRequest<TUser>(error: unknown, usuario: TUser, info: unknown): TUser {
+    if (error) throw error;
+    if (!usuario) {
+      const motivo = info instanceof Error ? info.name : undefined;
+      throw new UnauthorizedException(
+        motivo === 'TokenExpiredError'
+          ? 'Token expirado'
+          : 'Token no proporcionado o inválido',
       );
-      return true;
-    } catch {
-      throw new UnauthorizedException('Token inválido o expirado');
     }
+    return usuario;
   }
 }

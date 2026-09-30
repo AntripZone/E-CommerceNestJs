@@ -1,3 +1,6 @@
 import { SetMetadata } from '@nestjs/common';
 import { Rol } from '../../generated/prisma/enums.js';
-export const Roles = (...roles: Rol[]) => SetMetadata('roles', roles);
+
+export type RolToken = Rol | 'Cliente'; //Me dio weba agregar cliente en el Rol
+
+export const Roles = (...roles: RolToken[]) => SetMetadata('roles', roles);

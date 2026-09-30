@@ -12,7 +12,13 @@ async function bootstrap() {
   });
 
   app.useGlobalFilters(new PrismaExceptionFilter());
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
   app.useGlobalInterceptors(new LoggingInterceptor());
 
   const config = new DocumentBuilder()

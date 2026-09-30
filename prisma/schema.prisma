@@ -46,13 +46,6 @@ enum EstadoPago {
   RECHAZADO
 }
 
-enum EstadoEnvio {
-  PREPARANDO
-  EN_CAMINO
-  ENTREGADO
-  DEVUELTO
-}
-
 enum TipoMovimiento {
   ENTRADA
   VENTA
@@ -80,26 +73,27 @@ model Categoria {
 }
 
 model Producto {
-  id            Int      @id @default(autoincrement())
-  categoriaId   Int      @map("categoria_id")
-  sku           String   @unique @db.VarChar(50)
-  codigoBarras  String?  @unique @map("codigo_barras") @db.VarChar(50)
-  nombre        String   @db.VarChar(150)
-  descripcion   String?  @db.Text
-  precioCompra  Decimal  @map("precio_compra") @db.Decimal(10, 2)
-  precioVenta   Decimal  @map("precio_venta") @db.Decimal(10, 2)
-  stock         Int      @default(0)
-  stockMinimo   Int      @default(0) @map("stock_minimo")
-  publicadoWeb  Boolean  @default(false) @map("publicado_web")
-  activo        Boolean  @default(true)
-  version       Int      @default(0) // bloqueo optimista
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id           Int      @id @default(autoincrement())
+  categoriaId  Int      @map("categoria_id")
+  sku          String   @unique @db.VarChar(50)
+  codigoBarras String?  @unique @map("codigo_barras") @db.VarChar(50)
+  nombre       String   @db.VarChar(150)
+  descripcion  String?  @db.Text
+  precioCompra Decimal  @map("precio_compra") @db.Decimal(10, 2)
+  precioVenta  Decimal  @map("precio_venta") @db.Decimal(10, 2)
+  stock        Int      @default(0)
+  stockMinimo  Int      @default(0) @map("stock_minimo")
+  publicadoWeb Boolean  @default(false) @map("publicado_web")
+  activo       Boolean  @default(true)
+  version      Int      @default(0) // bloqueo optimista
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  categoria   Categoria               @relation(fields: [categoriaId], references: [id], onDelete: Restrict)
-  imagenes    ProductoImagen[]
-  detalles    VentaDetalle[]
-  movimientos MovimientoInventario[]
+  categoria    Categoria              @relation(fields: [categoriaId], references: [id], onDelete: Restrict)
+  imagenes     ProductoImagen[]
+  detalles     VentaDetalle[]
+  movimientos  MovimientoInventario[]
+  carritoItems CarritoItem[]
 
   @@index([categoriaId])
   @@index([nombre])
@@ -118,6 +112,7 @@ model ProductoImagen {
   @@index([productoId])
   @@map("producto_imagenes")
 }
+
 //---------
 
 model Usuario {
@@ -136,14 +131,16 @@ model Usuario {
 }
 
 model Cliente {
-  id        Int      @id @default(autoincrement())
-  nombre    String   @db.VarChar(150)
-  telefono  String   @unique @db.VarChar(20)
-  email     String?  @db.VarChar(150)
-  direccion String?  @db.VarChar(255)
-  createdAt DateTime @default(now()) @map("created_at")
+  id           Int      @id @default(autoincrement())
+  nombre       String   @db.VarChar(150)
+  telefono     String   @unique @db.VarChar(20)
+  email        String   @unique @db.VarChar(150)
+  direccion    String?  @db.VarChar(255)
+  createdAt    DateTime @default(now()) @map("created_at")
+  passwordHash String?  @map("password_hash") @db.VarChar(255)
 
-  ventas Venta[]
+  carrito Carrito?
+  ventas  Venta[]
 
   @@map("clientes")
 }
@@ -152,7 +149,7 @@ model Cliente {
 
 model Venta {
   id        Int         @id @default(autoincrement())
-  usuarioId Int         @map("usuario_id")
+  usuarioId Int?        @map("usuario_id")
   clienteId Int?        @map("cliente_id") // null = venta anónima en mostrador
   folio     String      @unique @db.VarChar(20)
   canal     CanalVenta
@@ -163,7 +160,7 @@ model Venta {
   createdAt DateTime    @default(now()) @map("created_at")
   updatedAt DateTime    @updatedAt @map("updated_at")
 
-  usuario     Usuario                @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  usuario     Usuario?               @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
   cliente     Cliente?               @relation(fields: [clienteId], references: [id], onDelete: SetNull)
   detalles    VentaDetalle[]
   pagos       Pago[]
@@ -183,7 +180,7 @@ model VentaDetalle {
   productoId     Int     @map("producto_id")
   cantidad       Int
   precioUnitario Decimal @map("precio_unitario") @db.Decimal(10, 2) // snapshot
-  costoUnitario  Decimal @map("costo_unitario") @db.Decimal(10, 2)  // snapshot
+  costoUnitario  Decimal @map("costo_unitario") @db.Decimal(10, 2) // snapshot
   subtotal       Decimal @db.Decimal(10, 2)
 
   venta    Venta    @relation(fields: [ventaId], references: [id], onDelete: Cascade)
@@ -210,33 +207,57 @@ model Pago {
 }
 
 model Envio {
-  id               Int         @id @default(autoincrement())
-  ventaId          Int         @unique @map("venta_id") // 1:1
-  direccionEntrega String      @map("direccion_entrega") @db.VarChar(255)
-  costoEnvio       Decimal     @default(0) @map("costo_envio") @db.Decimal(10, 2)
-  numeroGuia       String?     @map("numero_guia") @db.VarChar(100)
-  estado           EstadoEnvio @default(PREPARANDO)
-  fechaEntrega     DateTime?   @map("fecha_entrega")
+  id               Int       @id @default(autoincrement())
+  ventaId          Int       @unique @map("venta_id")
+  destinatario     String    @db.VarChar(150)
+  telefonoContacto String    @map("telefono_contacto") @db.VarChar(20)
+  direccionEntrega String    @map("direccion_entrega") @db.VarChar(255)
+  referencias      String?   @db.VarChar(255)
+  fechaEntrega     DateTime? @map("fecha_entrega")
 
   venta Venta @relation(fields: [ventaId], references: [id], onDelete: Cascade)
 
   @@map("envios")
 }
 
+model Carrito {
+  id        Int      @id @default(autoincrement())
+  clienteId Int      @unique @map("cliente_id")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  cliente Cliente       @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  items   CarritoItem[]
+
+  @@map("carritos")
+}
+
+model CarritoItem {
+  id         Int @id @default(autoincrement())
+  carritoId  Int @map("carrito_id")
+  productoId Int @map("producto_id")
+  cantidad   Int
+
+  carrito  Carrito  @relation(fields: [carritoId], references: [id], onDelete: Cascade)
+  producto Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
+
+  @@unique([carritoId, productoId])
+  @@map("carrito_items")
+}
+
 model MovimientoInventario {
   id              Int            @id @default(autoincrement())
   productoId      Int            @map("producto_id")
-  usuarioId       Int            @map("usuario_id")
+  usuarioId       Int?           @map("usuario_id")
   ventaId         Int?           @map("venta_id")
   tipo            TipoMovimiento
-  cantidad        Int            // + entra / - sale
+  cantidad        Int // + entra / - sale
   stockAnterior   Int            @map("stock_anterior")
   stockResultante Int            @map("stock_resultante")
   motivo          String?        @db.VarChar(255)
   createdAt       DateTime       @default(now()) @map("created_at")
 
   producto Producto @relation(fields: [productoId], references: [id], onDelete: Restrict)
-  usuario  Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  usuario  Usuario? @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
   venta    Venta?   @relation(fields: [ventaId], references: [id], onDelete: SetNull)
 
   @@index([productoId, createdAt])

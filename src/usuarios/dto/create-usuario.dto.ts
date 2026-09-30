@@ -9,7 +9,7 @@ import {
   Matches,
 } from 'class-validator';
 import { Rol } from '../../generated/prisma/enums.js';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 
 const trim = () =>
@@ -31,12 +31,14 @@ export class CreateUsuarioDto {
 
   @IsString({ message: 'password debe ser una cadena de texto' })
   @IsNotEmpty({ message: 'password es obligatorio' })
-  @MinLength(8, { message: 'la contraseña debe tener almenos 6 caracteres' })
+  @MinLength(8, { message: 'la contraseña debe tener almenos 8 caracteres' })
   @Matches(/\S/, {
     message: 'La contraseña no puede contener solo espacios',
   })
   password!: string;
 
+  @ApiPropertyOptional({ enum: Rol, default: Rol.CAJERO })
+  @IsOptional()
   @IsEnum(Rol, { message: 'El rol debe ser ADMIN o CAJERO' })
   rol?: Rol;
 }
