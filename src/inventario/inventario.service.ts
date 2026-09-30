@@ -5,15 +5,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client.js';
-import { CreateInventarioDto } from './dto/create-inventario.dto.js';
-import { UpdateInventarioDto } from './dto/update-inventario.dto.js';
+import { EntradaInventarioDto } from './dto/entrada-inventario.dto.js';
+import { AjusteInventarioDto } from './dto/ajuste-inventario.dto.js';
+import { FiltrosMovimientoDto } from './dto/filtros-movimiento.dto.js';
 import { TipoMovimiento } from '../generated/prisma/enums.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 interface MovimientoStock {
   productoId: number;
   usuarioId: number;
-  cantidad: number; // + entra / - sale
+  cantidad: number;
   tipo: TipoMovimiento;
   ventaId?: number;
   motivo?: string;
@@ -66,23 +67,101 @@ export class InventarioService {
     });
   }
 
-  create(createInventarioDto: CreateInventarioDto) {
-    return 'This action adds a new inventario';
+  async registrarEntrada(
+    entradaInventarioDto: EntradaInventarioDto,
+    usuarioId: number,
+  ) {
+    const { productoId, cantidad, costoUnitario, motivo } =
+      entradaInventarioDto;
+
+    return this.prisma.$transaction(async (transaction) => {
+      const movimiento = await this.moverStock(transaction, {
+        productoId,
+        usuarioId,
+        cantidad,
+        tipo: TipoMovimiento.ENTRADA,
+        motivo,
+      });
+
+      if (costoUnitario !== undefined)
+        await transaction.producto.update({
+          where: { id: productoId },
+          data: { precioCompra: costoUnitario },
+        });
+
+      return movimiento;
+    });
   }
 
-  findAll() {
-    return `This action returns all inventario`;
+  async registrarAjuste(
+    ajusteInventarioDto: AjusteInventarioDto,
+    usuarioId: number,
+  ) {
+    return this.prisma.$transaction((transaction) =>
+      this.moverStock(transaction, {
+        ...ajusteInventarioDto,
+        usuarioId,
+        tipo: TipoMovimiento.AJUSTE,
+      }),
+    );
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} inventario`;
+  async findAll(filtros: FiltrosMovimientoDto) {
+    const { productoId, tipo, desde, hasta } = filtros;
+
+    return this.prisma.movimientoInventario.findMany({
+      where: {
+        productoId,
+        tipo,
+        ...((desde || hasta) && {
+          createdAt: {
+            ...(desde && { gte: new Date(desde) }),
+            ...(hasta && { lte: new Date(`${hasta}T23:59:59.999`) }),
+          },
+        }),
+      },
+      include: {
+        producto: { select: { id: true, nombre: true, sku: true } },
+        usuario: { select: { id: true, nombre: true } },
+        venta: { select: { id: true, folio: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
-  update(id: number, updateInventarioDto: UpdateInventarioDto) {
-    return `This action updates a #${id} inventario`;
+  async historialProducto(productoId: number) {
+    const producto = await this.prisma.producto.findUnique({
+      where: { id: productoId },
+      select: { id: true, nombre: true, sku: true, stock: true },
+    });
+    if (!producto)
+      throw new NotFoundException(
+        `Producto con ID: ${productoId} no encontrado.`,
+      );
+    const movimiento = await this.prisma.movimientoInventario.findMany({
+      where: { producto },
+      include: {
+        usuario: { select: { id: true, nombre: true } },
+        venta: { select: { id: true, folio: true } },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    return { producto, movimiento };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} inventario`;
+  async findOne(id: number) {
+    const movimiento = await this.prisma.movimientoInventario.findUnique({
+      where: { id },
+      include: {
+        producto: { select: { id: true, nombre: true, sku: true } },
+        usuario: { select: { id: true, nombre: true } },
+        venta: { select: { id: true, folio: true } },
+      },
+    });
+    if (!movimiento)
+      throw new NotFoundException(`Movimiento con ID: ${id} no encontrado.`);
+
+    return movimiento;
   }
 }

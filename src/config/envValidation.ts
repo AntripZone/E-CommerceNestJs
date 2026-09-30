@@ -16,6 +16,5 @@ export const envValidationSchema = Joi.object({
   CORS_ORIGIN: Joi.string()
     .uri({ scheme: ['http', 'https'] })
     .required(),
-  RESTAURANT_NAME: Joi.string().min(3).max(50).required(),
-  TAX_RATE: Joi.number().min(0).max(1).required(),
+  ECOMMERCE_NAME: Joi.string().min(3).max(50).required(),
 });
