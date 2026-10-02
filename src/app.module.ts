@@ -11,6 +11,7 @@ import { VentasModule } from './ventas/ventas.module.js';
 import { PedidosModule } from './pedidos/pedidos.module.js';
 import { TiendaModule } from './tienda/tienda.module.js';
 import { InventarioModule } from './inventario/inventario.module.js';
+import { PasarelaModule } from './pasarela/pasarela.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { envValidationSchema } from './config/envValidation.js';
 import { ConfigModule } from '@nestjs/config';
@@ -19,6 +20,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
 @Module({
   imports: [
+    AuthModule,
     // Distributed tracing, auto-correlated logs, request/job metrics, error
     // telemetry, alarms, and more — out of the box. Sign up at https://observe.nestjs.com
     ConfigModule.forRoot({
@@ -40,8 +42,10 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     UsuariosModule,
     ClientesModule,
     VentasModule,
+    PedidosModule,
+    PasarelaModule,
+    TiendaModule,
     InventarioModule,
-    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -17,4 +17,9 @@ export const envValidationSchema = Joi.object({
     .uri({ scheme: ['http', 'https'] })
     .required(),
   ECOMMERCE_NAME: Joi.string().min(3).max(50).required(),
+  MOCKPAY_API_URL: Joi.string()
+    .uri({ scheme: ['https', 'http'] })
+    .default('https://mockpay-backend.onrender.com'),
+  MOCKPAY_SECRET_KEY: Joi.string().required(),
+  MOCKPAY_CURRENCY: Joi.string().length(3).uppercase().default('PEN'),
 });

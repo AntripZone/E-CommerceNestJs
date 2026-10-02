@@ -160,7 +160,6 @@ export class VentasService {
           include: { producto: { select: { nombre: true, sku: true } } },
           orderBy: { id: 'asc' },
         },
-        cajero: venta.usuario?.nombre ?? 'Tienda en linea',
         pagos: { orderBy: { id: 'asc' } },
         cliente: { select: { nombre: true, telefono: true } },
         usuario: { select: { nombre: true } },
@@ -172,7 +171,7 @@ export class VentasService {
       fecha: venta.updatedAt,
       canal: venta.canal,
       estado: venta.estado,
-      cajero: venta.usuario.nombre,
+      cajero: venta.usuario?.nombre ?? 'Tienda en linea',
       cliente: venta.cliente,
       items: venta.detalles.map((detalle) => ({
         producto: detalle.producto.nombre,

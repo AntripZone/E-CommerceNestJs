@@ -21,6 +21,34 @@ export class TiendaService {
     private readonly pedidosService: PedidosService,
   ) {}
 
+  private async obtenerItem(clienteId: number, productoId: number) {
+    const item = await this.prisma.carritoItem.findFirst({
+      where: { productoId, carrito: { clienteId } },
+    });
+    if (!item)
+      throw new NotFoundException(
+        `El producto ${productoId} no está en tu carrito`,
+      );
+
+    return item;
+  }
+
+  private async validarDisponible(productoId: number, cantidad: number) {
+    const producto = await this.prisma.producto.findFirst({
+      where: { id: productoId, activo: true, publicadoWeb: true },
+    });
+    if (!producto)
+      throw new NotFoundException(
+        `Producto con ID: ${productoId} no disponible en la tienda.`,
+      );
+    if (producto.stock === 0)
+      throw new ConflictException(`"${producto.nombre}" está agotado`);
+    if (producto.stock < cantidad)
+      throw new ConflictException(
+        `Solo quedan ${producto.stock} unidades de "${producto.nombre}"`,
+      );
+  }
+
   async obtenerCarrito(clienteId: number) {
     const carrito = await this.prisma.carrito.upsert({
       where: { clienteId },
@@ -114,8 +142,6 @@ export class TiendaService {
     return this.obtenerCarrito(clienteId);
   }
 
-  // Convierte el carrito en un pedido: descuenta stock y lo manda a la cola.
-  // Si un producto ya no alcanza, se hace rollback y el carrito queda intacto.
   async confirmar(clienteId: number, datosEnvioDto: DatosEnvioDto) {
     const pedido = await this.prisma.$transaction(async (transaction) => {
       const carrito = await transaction.carrito.findUnique({
@@ -152,36 +178,5 @@ export class TiendaService {
 
   miPedido(clienteId: number, id: number) {
     return this.pedidosService.findOne(id, clienteId);
-  }
-
-  // ─────────────── helpers ───────────────
-
-  private async obtenerItem(clienteId: number, productoId: number) {
-    const item = await this.prisma.carritoItem.findFirst({
-      where: { productoId, carrito: { clienteId } },
-    });
-    if (!item)
-      throw new NotFoundException(
-        `El producto ${productoId} no está en tu carrito`,
-      );
-
-    return item;
-  }
-
-  // Bloquea la compra de productos agotados u ocultos en la web
-  private async validarDisponible(productoId: number, cantidad: number) {
-    const producto = await this.prisma.producto.findFirst({
-      where: { id: productoId, activo: true, publicadoWeb: true },
-    });
-    if (!producto)
-      throw new NotFoundException(
-        `Producto con ID: ${productoId} no disponible en la tienda.`,
-      );
-    if (producto.stock === 0)
-      throw new ConflictException(`"${producto.nombre}" está agotado`);
-    if (producto.stock < cantidad)
-      throw new ConflictException(
-        `Solo quedan ${producto.stock} unidades de "${producto.nombre}"`,
-      );
   }
 }
