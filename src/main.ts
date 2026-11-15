@@ -32,5 +32,11 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   await app.listen(process.env.PORT ?? 3000);
+
+  const origenes = (process.env.CORS_ORIGIN ?? '')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+  app.enableCors({ origin: origenes.length > 1 ? origenes : origenes[0] });
 }
 await bootstrap();
