@@ -13,9 +13,7 @@ export const envValidationSchema = Joi.object({
     .pattern(/^\d+[smhd]$/)
     .required(),
   BCRYPT_SALT_ROUNDS: Joi.number().integer().min(8).max(14).default(10),
-  CORS_ORIGIN: Joi.string()
-    .uri({ scheme: ['http', 'https'] })
-    .required(),
+  CORS_ORIGIN: Joi.string().required(),
   ECOMMERCE_NAME: Joi.string().min(3).max(50).required(),
   MOCKPAY_API_URL: Joi.string()
     .uri({ scheme: ['https', 'http'] })
